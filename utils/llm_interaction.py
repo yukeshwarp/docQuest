@@ -1,7 +1,7 @@
 import requests
 
 azure_endpoint = "https://gpt-4omniwithimages.openai.azure.com/"
-api_key = "your_api_key"  # Replace with your actual API key
+api_key = "6e98566acaf24997baa39039b6e6d183"  # Replace with your actual API key
 api_version = "2024-02-01"
 model = "GPT-40-mini"
 
