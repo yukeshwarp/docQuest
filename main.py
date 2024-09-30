@@ -43,7 +43,7 @@ if st.session_state.document_data:
     if st.session_state.chat_history:
         st.subheader("Chat History")
         for chat in st.session_state.chat_history:
-            st.markdowm(f"\n")
+            st.markdown(f"\n")
             st.markdown(f"{chat['question']}")
             st.markdown(f"{chat['answer']}")
 
