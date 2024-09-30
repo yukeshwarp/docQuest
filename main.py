@@ -15,6 +15,7 @@ def handle_question(question):
         answer = ask_question(st.session_state.document_data, question)
         # Add the question-answer pair to the chat history
         st.session_state.chat_history.append({"question": question, "answer": answer})
+        st.rerun(scope="fragment")
 
 # Streamlit application title
 st.title("docQuest")
@@ -41,5 +42,4 @@ if st.session_state.document_data:
     question = st.text_input("What to know about the doc?")
     if st.button("Send"):
         handle_question(question)
-        st.rerun(scope="fragment")
         #st.experimental_rerun()  # Rerun the app to update chat with the new question-answer pair
