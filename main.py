@@ -41,4 +41,4 @@ if st.session_state.document_data:
     question = st.text_input("What to know about the doc?")
     if st.button("Send"):
         handle_question(question)
-        st.experimental_rerun()  # Rerun the app to update chat with the new question-answer pair
+        #st.experimental_rerun()  # Rerun the app to update chat with the new question-answer pair
