@@ -17,7 +17,7 @@ def handle_question(question):
         st.session_state.chat_history.append({"question": question, "answer": answer})
 
 # Streamlit application title
-st.title("PDF Chat Analyzer")
+st.title("docQuest")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
@@ -26,7 +26,7 @@ uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
 if uploaded_file and st.session_state.document_data is None:
     with st.spinner('Processing PDF...'):
         st.session_state.document_data = process_pdf_pages(uploaded_file)
-    st.success("PDF processed successfully!")
+    st.success("PDF processed successfully! Let's explore your document.")
 
 # Display chat history in a chat-like format
 if st.session_state.chat_history:
@@ -37,8 +37,8 @@ if st.session_state.chat_history:
 
 # Display question input and button for asking new questions
 if st.session_state.document_data:
-    st.subheader("Ask a Question About the PDF")
-    question = st.text_input("Enter your question:")
+    #st.subheader("What to know about the doc?")
+    question = st.text_input("What to know about the doc?")
     if st.button("Send"):
         handle_question(question)
         st.experimental_rerun()  # Rerun the app to update chat with the new question-answer pair
