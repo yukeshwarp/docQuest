@@ -41,7 +41,7 @@ if st.session_state.document_data:
     
     # Display chat history in a chat-like format
     if st.session_state.chat_history:
-        st.subheader("Chat History")
+        st.subheader("Chats", divider = "orange")
         for chat in st.session_state.chat_history:
             st.markdown(f"\n")
             st.markdown(f"{chat['question']}")
