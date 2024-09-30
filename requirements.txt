@@ -1,0 +1,5 @@
+streamlit
+PyMuPDF
+requests
+io
+base64
