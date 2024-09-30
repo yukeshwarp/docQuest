@@ -37,11 +37,10 @@ if st.session_state.chat_history:
         st.markdown(f"**Assistant:** {chat['answer']}")
 
 # Display question input and button for asking new questions
-@st.fragment
+
 if st.session_state.document_data:
     #st.subheader("What to know about the doc?")
     question = st.text_input("What to know about the doc?")
     if st.button("Send"):
         handle_question(question)
-        st.rerun(scope="fragment")
         #st.experimental_rerun()  # Rerun the app to update chat with the new question-answer pair
