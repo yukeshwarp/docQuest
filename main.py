@@ -15,32 +15,38 @@ def handle_question(question):
         answer = ask_question(st.session_state.document_data, question)
         # Add the question-answer pair to the chat history
         st.session_state.chat_history.append({"question": question, "answer": answer})
-        
+        # Ensure the chat history updates correctly
+        st.rerun()
 
 # Streamlit application title
 st.title("docQuest")
 
-# File uploader
-uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+# Sidebar for file upload and document information
+with st.sidebar:
+    st.subheader("Upload and Manage PDFs")
+    
+    # File uploader
+    uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+    
+    # Process the PDF if uploaded and not already processed
+    if uploaded_file and st.session_state.document_data is None:
+        with st.spinner('Processing PDF...'):
+            st.session_state.document_data = process_pdf_pages(uploaded_file)
+        st.success("PDF processed successfully! Let's explore your document.")
+        st.rerun()  # Reload to reflect changes
 
-# Process the PDF if uploaded and not already processed
-if uploaded_file and st.session_state.document_data is None:
-    with st.spinner('Processing PDF...'):
-        st.session_state.document_data = process_pdf_pages(uploaded_file)
-    st.success("PDF processed successfully! Let's explore your document.")
-
-# Display chat history in a chat-like format
-if st.session_state.chat_history:
-    st.subheader("Chat History")
-    for chat in st.session_state.chat_history:
-        st.markdown(f"**You:** {chat['question']}")
-        st.markdown(f"**Assistant:** {chat['answer']}")
-
-# Display question input and button for asking new questions
-
+# Main page for chat interaction
 if st.session_state.document_data:
-    #st.subheader("What to know about the doc?")
-    question = st.text_input("What to know about the doc?")
+    st.subheader("Ask Questions about the Document")
+    
+    # Display chat history in a chat-like format
+    if st.session_state.chat_history:
+        st.subheader("Chat History")
+        for chat in st.session_state.chat_history:
+            st.markdown(f"**You:** {chat['question']}")
+            st.markdown(f"**Assistant:** {chat['answer']}")
+
+    # Input for user questions
+    question = st.text_input("What would you like to know about the document?")
     if st.button("Send"):
         handle_question(question)
-        #st.experimental_rerun()  # Rerun the app to update chat with the new question-answer pair
