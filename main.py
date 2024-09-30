@@ -44,7 +44,7 @@ if st.session_state.document_data:
         st.subheader("Chats", divider = "orange")
         for chat in st.session_state.chat_history:
             st.markdown(f"\n")
-            st.markdown(f"**{chat['question']}**")
+            st.markdown(f"{**chat['question']**}")
             st.markdown(f"{chat['answer']}")
 
     # Input for user questions
