@@ -23,10 +23,10 @@ st.title("docQuest")
 
 # Sidebar for file upload and document information
 with st.sidebar:
-    st.subheader("Upload and Manage PDFs")
+    st.subheader("docQuest")
     
     # File uploader
-    uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
+    uploaded_file = st.file_uploader("Upload and manage files here", type=["pdf"])
     
     # Process the PDF if uploaded and not already processed
     if uploaded_file and st.session_state.document_data is None:
@@ -37,14 +37,15 @@ with st.sidebar:
 
 # Main page for chat interaction
 if st.session_state.document_data:
-    st.subheader("Ask Questions about the Document")
+    st.subheader("Hi! Let's know more about your document..")
     
     # Display chat history in a chat-like format
     if st.session_state.chat_history:
         st.subheader("Chat History")
         for chat in st.session_state.chat_history:
-            st.markdown(f"**You:** {chat['question']}")
-            st.markdown(f"**Assistant:** {chat['answer']}")
+            st.markdowm(f"\n")
+            st.markdown(f"{chat['question']}")
+            st.markdown(f"{chat['answer']}")
 
     # Input for user questions
     question = st.text_input("What would you like to know about the document?")
