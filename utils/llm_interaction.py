@@ -1,9 +1,13 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-azure_endpoint = "https://gpt-4omniwithimages.openai.azure.com/"
-api_key = "6e98566acaf24997baa39039b6e6d183"  
-api_version = "2024-02-01"
-model = "GPT-40-mini"
+load_dotenv()  # Load environment variables from the .env file
+
+azure_endpoint = os.getenv("AZURE_ENDPOINT")
+api_key = os.getenv("API_KEY")
+api_version = os.getenv("API_VERSION")
+model = os.getenv("MODEL")
 
 def summarize_page(page_text, previous_summary, page_number):
     """Summarize a single page's text using LLM."""
