@@ -36,19 +36,26 @@ with st.sidebar:
         with st.spinner('Processing PDF...'):
             st.session_state.document_data = process_pdf_pages(uploaded_file)
         st.success("PDF processed successfully! Let's explore your document.")
-        st.rerun()  # Reload to reflect changes
 
 # Main page for chat interaction
 if st.session_state.document_data:
     st.subheader("Hi! Let's know more about your document..")
     
-    # Display chat history in a chat-like format
-    if st.session_state.chat_history:
-        st.subheader("Chats", divider="orange")
-        for chat in st.session_state.chat_history:
-            st.markdown(f"\n")
-            st.markdown(f"**Quest:** {chat['question']}")
-            st.markdown(f"**Finds:** {chat['answer']}")
+    # Create a placeholder container for chat history
+    chat_placeholder = st.empty()
+
+    # Function to display chat history dynamically
+    def display_chat():
+        with chat_placeholder.container():
+            if st.session_state.chat_history:
+                st.subheader("Chats", divider="orange")
+                for chat in st.session_state.chat_history:
+                    st.markdown(f"\n")
+                    st.markdown(f"**Quest:** {chat['question']}")
+                    st.markdown(f"**Finds:** {chat['answer']}")
+
+    # Display the chat history
+    display_chat()
 
     # Input for user questions
     st.text_input(
@@ -57,3 +64,6 @@ if st.session_state.document_data:
         on_change=handle_question,
         key="question_input"
     )
+
+    # Update chat display after handling the question
+    display_chat()
