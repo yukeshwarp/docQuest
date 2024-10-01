@@ -11,7 +11,8 @@ if 'question_input' not in st.session_state:
     st.session_state.question_input = ""
 
 # Function to handle user question and get the answer
-def handle_question(question):
+def handle_question():
+    question = st.session_state.question_input
     if question:
         # Use the cached document data for the query
         answer = ask_question(st.session_state.document_data, question)
@@ -19,8 +20,6 @@ def handle_question(question):
         st.session_state.chat_history.append({"question": question, "answer": answer})
         # Clear the input field after sending
         st.session_state.question_input = ""
-        # Ensure the chat history updates correctly
-        st.rerun()
 
 # Streamlit application title
 st.title("docQuest")
@@ -52,6 +51,9 @@ if st.session_state.document_data:
             st.markdown(f"**Finds:** {chat['answer']}")
 
     # Input for user questions
-    question = st.text_input("What would you like to know about the document?", value=st.session_state.question_input, key="question_input")
-    if st.button("Send"):
-        handle_question(question)
+    st.text_input(
+        "What would you like to know about the document?",
+        value=st.session_state.question_input,
+        on_change=handle_question,
+        key="question_input"
+    )
