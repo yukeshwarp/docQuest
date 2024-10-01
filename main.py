@@ -41,46 +41,28 @@ with st.sidebar:
 if st.session_state.document_data:
     st.subheader("Hi! Let's know more about your document..")
     
-    # Create a container for chat history with a fixed height
-    chat_container = st.container()
-    
-    # Display chat history in a scrollable area
-    with chat_container:
-        st.subheader("Chats", divider="orange")
-        if st.session_state.chat_history:
-            for chat in st.session_state.chat_history:
-                st.markdown(f"**Quest:** {chat['question']}")
-                st.markdown(f"**Finds:** {chat['answer']}")
-                st.markdown("---")
+    # Create a placeholder container for chat history
+    chat_placeholder = st.empty()
 
-    # Sticky input box at the bottom
-    st.markdown(
-        """
-        <style>
-        .sticky {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: white;
-            padding: 10px;
-            box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
-            z-index: 1;
-        }
-        </style>
-        """, 
-        unsafe_allow_html=True
-    )
+    # Function to display chat history dynamically
+    def display_chat():
+        with chat_placeholder.container():
+            if st.session_state.chat_history:
+                st.subheader("Chats", divider="orange")
+                for chat in st.session_state.chat_history:
+                    st.markdown(f"**Quest:** {chat['question']}")
+                    st.markdown(f"**Finds:** {chat['answer']}")
+                    st.markdown(f"\n")
+                    st.markdown("---")
+                    st.markdown(f"\n")
+
+    # Display the chat history
+    display_chat()
 
     # Input for user questions
-    st.markdown('<div class="sticky">', unsafe_allow_html=True)
     st.text_input(
         "What would you like to know about the document?",
         value=st.session_state.question_input,
         on_change=handle_question,
         key="question_input"
     )
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Adding extra space at the bottom to avoid content overlap
-    st.markdown('<div style="height: 60px;"></div>', unsafe_allow_html=True)
