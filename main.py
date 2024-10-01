@@ -16,7 +16,8 @@ def handle_question(question):
         # Add the question-answer pair to the chat history
         st.session_state.chat_history.append({"question": question, "answer": answer})
         # Ensure the chat history updates correctly
-        st.rerun()
+        #st.rerun()
+        st.session_state.current_question = ''  
 
 # Streamlit application title
 st.title("docQuest")
