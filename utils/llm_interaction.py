@@ -51,8 +51,8 @@ def ask_question(document_data, question):
         json={
             "model": model,
             "messages": [
-                {"role": "system", "content": "You are an assistant that answers questions based on provided summaries."},
-                {"role": "user", "content": f"Use the context as knowledge base and answer the question: {question}\n\Context:\n{combined_content}"}
+                {"role": "system", "content": "You are an assistant that answers questions based on provided knowledge base."},
+                {"role": "user", "content": f"Use the context as knowledge base and answer the question in a proper redable format: {question}\n\Context:\n{combined_content}"}
             ],
             "temperature": 0.0
         }
