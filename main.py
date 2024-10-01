@@ -50,6 +50,7 @@ if st.session_state.document_data:
                     # ChatGPT-like alignment: user input on the right, assistant response on the left                
                     user_chat = f"<div style='float: right; display: inline-block; background-color: #22303c; margin: 5px; border-radius: 8px; padding: 10px; margin-left: 3vw;'> {chat['question']}</div>"
                     assistant_chat = f"<div style='float: left; display: inline-block; background-color: #22303c; margin: 5px; border-radius: 8px; padding: 10px; margin-right: 3vw;'> {chat['answer']}</div>"                    
+                    st.markdown(f"\n")
                     st.markdown(user_chat, unsafe_allow_html=True)
                     st.markdown(assistant_chat, unsafe_allow_html=True)
                     st.markdown("---")
