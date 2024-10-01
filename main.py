@@ -52,7 +52,7 @@ if st.session_state.document_data:
                     assistant_chat = f"<div style='text-align: left; margin: 5px;'><strong>Finds:</strong> {chat['answer']}</div>"
                     st.markdown(user_chat, unsafe_allow_html=True)
                     st.markdown(assistant_chat, unsafe_allow_html=True)
-                    st.markdown("---")
+                    #st.markdown("---")
 
     # Display the chat history
     display_chat()
