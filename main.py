@@ -57,14 +57,8 @@ if st.session_state.document_data:
     # Display the chat history
     display_chat()
 
-    # Create a container for the chat input at the bottom
-    input_container = st.container()
-    
-    # Input for user questions in the bottom container
-    with input_container:
-        st.text_input(
-            "What would you like to know about the document?",
-            value=st.session_state.question_input,
-            on_change=handle_question,
-            key="question_input"
-        )
+    # Input for user questions using chat input
+    prompt = st.chat_input("Say something")
+    if prompt:
+        st.session_state.question_input = prompt
+        handle_question()  # Call the function to handle the question
