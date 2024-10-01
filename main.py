@@ -47,8 +47,14 @@ if st.session_state.document_data:
             if st.session_state.chat_history:
                 st.subheader("Chats", divider="orange")
                 for chat in st.session_state.chat_history:
-                    st.markdown(f"**Quest:** {chat['question']}")
-                    st.markdown(f"**Finds:** {chat['answer']}")
+                    # Aligning Quest to the right and Finds to the left
+                    st.markdown(
+                        f"<div style='display: flex; justify-content: space-between;'>"
+                        f"<div style='text-align: right; width: 45%;'><strong>Quest:</strong> {chat['question']}</div>"
+                        f"<div style='text-align: left; width: 45%;'><strong>Finds:</strong> {chat['answer']}</div>"
+                        f"</div>", 
+                        unsafe_allow_html=True
+                    )
                     st.markdown("---")
 
     # Display the chat history
