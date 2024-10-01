@@ -53,3 +53,4 @@ if st.session_state.document_data:
     question = st.text_input("What would you like to know about the document?")
     if st.button("Send"):
         handle_question(question)
+        question = " "
