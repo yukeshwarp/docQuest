@@ -21,6 +21,21 @@ def handle_question():
         # Clear the input field after sending
         st.session_state.question_input = ""
 
+        # Rerun only the chat history section to update it
+        update_chat()
+
+# Function to update chat without rerunning the full app
+def update_chat():
+    with st.session_state.chat_placeholder.container():
+        if st.session_state.chat_history:
+            st.subheader("Chats", divider="orange")
+            for chat in st.session_state.chat_history:
+                st.markdown(f"**Quest:** {chat['question']}")
+                st.markdown(f"**Finds:** {chat['answer']}")
+                st.markdown(f"\n")
+                st.markdown("---")
+                st.markdown(f"\n")
+
 # Streamlit application title
 st.title("docQuest")
 
@@ -41,23 +56,12 @@ with st.sidebar:
 if st.session_state.document_data:
     st.subheader("Hi! Let's know more about your document..")
     
-    # Create a placeholder container for chat history
-    chat_placeholder = st.empty()
+    # Create a placeholder for chat history, stored in session state to prevent reruns
+    if 'chat_placeholder' not in st.session_state:
+        st.session_state.chat_placeholder = st.empty()
 
-    # Function to display chat history dynamically
-    def display_chat():
-        with chat_placeholder.container():
-            if st.session_state.chat_history:
-                st.subheader("Chats", divider="orange")
-                for chat in st.session_state.chat_history:
-                    st.markdown(f"**Quest:** {chat['question']}")
-                    st.markdown(f"**Finds:** {chat['answer']}")
-                    st.markdown(f"\n")
-                    #st.subheader("", divider = "gray")
-                    st.markdown("---")
-                    st.markdown(f"\n")
-    # Display the chat history
-    display_chat()
+    # Display chat history dynamically
+    update_chat()
 
     # Input for user questions
     st.text_input(
@@ -66,6 +70,3 @@ if st.session_state.document_data:
         on_change=handle_question,
         key="question_input"
     )
-
-    # Update chat display after handling the question
-    display_chat()
