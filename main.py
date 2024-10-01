@@ -48,9 +48,10 @@ if st.session_state.document_data:
                 st.subheader("Chats", divider="orange")
                 for chat in st.session_state.chat_history:
                     # ChatGPT-like alignment: user input on the right, assistant response on the left
-                    user_chat = f"<div style='text-align: right; margin: 5px;'><strong>You:</strong> {chat['question']}</div>"
-                    assistant_chat = f"<div style='text-align: left; margin: 5px;'><strong>Finds:</strong> {chat['answer']}</div>"
+                    user_chat = f"<div style='text-align: right; margin: 5px;'> {chat['question']}</div>"
+                    assistant_chat = f"<div style='text-align: left; margin: 5px;'> {chat['answer']}</div>"
                     st.markdown(user_chat, unsafe_allow_html=True)
+                    st.markdown(f"\n")
                     st.markdown(assistant_chat, unsafe_allow_html=True)
                     st.markdown(f"\n")
 
