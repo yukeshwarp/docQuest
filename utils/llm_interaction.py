@@ -52,7 +52,7 @@ def ask_question(document_data, question):
             "model": model,
             "messages": [
                 {"role": "system", "content": "You are an assistant that answers questions based on provided summaries."},
-                {"role": "user", "content": f"Based on the following summaries, answer the question: {question}\n\nSummaries:\n{combined_content}"}
+                {"role": "user", "content": f"Use the context as knowledge base and answer the question: {question}\n\Context:\n{combined_content}"}
             ],
             "temperature": 0.0
         }
