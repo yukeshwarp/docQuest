@@ -36,7 +36,7 @@ with st.sidebar:
 
 # Main page for chat interaction
 if st.session_state.document_data:
-    st.subheader("Hi! Let's know more about your document..")
+    st.subheader("Let us know more about your document..")
     
     # Create a placeholder container for chat history
     chat_placeholder = st.empty()
@@ -55,7 +55,7 @@ if st.session_state.document_data:
     display_chat()
 
     # Input for user questions using chat input
-    prompt = st.chat_input("Say something", key="chat_input")
+    prompt = st.chat_input("Let me know what you want to know about your document..", key="chat_input")
     
     # Check if the prompt has been updated
     if prompt:
