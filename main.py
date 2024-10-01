@@ -53,7 +53,7 @@ if st.session_state.document_data:
                         text-align: right; 
                         margin: 5px; 
                         padding: 10px; 
-                        background-color: #f0f0f0; 
+                        background-color: #2d146b; 
                         border-radius: 8px; 
                         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
                         display: inline-block;'>
@@ -65,7 +65,7 @@ if st.session_state.document_data:
                         text-align: left; 
                         margin: 5px; 
                         padding: 10px; 
-                        background-color: #e0e0e0; 
+                        background-color: #2d146b; 
                         border-radius: 8px; 
                         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
                         display: inline-block;'>
