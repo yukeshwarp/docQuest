@@ -27,12 +27,20 @@ with st.sidebar:
     
     # File uploader
     uploaded_file = st.file_uploader("Upload and manage files here", type=["pdf"])
-    
-    # Process the PDF if uploaded and not already processed
-    if uploaded_file and st.session_state.document_data is None:
-        with st.spinner('Processing PDF...'):
-            st.session_state.document_data = process_pdf_pages(uploaded_file)
-        st.success("PDF processed successfully! Let's explore your document.")
+
+    # Process the PDF if uploaded and either not processed or a new file is uploaded
+    if uploaded_file:
+        # Check if the uploaded file is new or different from the previously uploaded file
+        if 'last_uploaded_file' not in st.session_state or st.session_state.last_uploaded_file != uploaded_file:
+            st.session_state.last_uploaded_file = uploaded_file
+            st.session_state.document_data = None  # Reset document data
+            st.session_state.chat_history = []  # Reset chat history
+            
+        # Process the PDF if not already processed
+        if st.session_state.document_data is None:
+            with st.spinner('Processing PDF...'):
+                st.session_state.document_data = process_pdf_pages(uploaded_file)
+            st.success("PDF processed successfully! Let's explore your document.")
 
 # Main page for chat interaction
 if st.session_state.document_data:
