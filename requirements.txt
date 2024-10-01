@@ -2,3 +2,4 @@ streamlit
 PyMuPDF
 requests
 Pillow
+python-dotenv
