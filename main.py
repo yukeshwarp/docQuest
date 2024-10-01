@@ -11,15 +11,12 @@ if 'question_input' not in st.session_state:
     st.session_state.question_input = ""
 
 # Function to handle user question and get the answer
-def handle_question():
-    question = st.session_state.question_input
-    if question:
+def handle_question(prompt):
+    if prompt:
         # Use the cached document data for the query
-        answer = ask_question(st.session_state.document_data, question)
+        answer = ask_question(st.session_state.document_data, prompt)
         # Add the question-answer pair to the chat history
-        st.session_state.chat_history.append({"question": question, "answer": answer})
-        # Clear the input field after sending
-        st.session_state.question_input = ""
+        st.session_state.chat_history.append({"question": prompt, "answer": answer})
 
 # Streamlit application title
 st.title("docQuest")
@@ -58,7 +55,10 @@ if st.session_state.document_data:
     display_chat()
 
     # Input for user questions using chat input
-    prompt = st.chat_input("Say something")
+    prompt = st.chat_input("Say something", key="chat_input")
+    
+    # Check if the prompt has been updated
     if prompt:
-        st.session_state.question_input = prompt
-        handle_question()  # Call the function to handle the question
+        handle_question(prompt)  # Call the function to handle the question
+        st.session_state.question_input = ""  # Clear the input field after sending
+        display_chat()  # Re-display the chat after adding the new entry
