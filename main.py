@@ -71,18 +71,29 @@ if st.session_state.document_data:
             box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
             z-index: 1;
         }
+        .chat-container {
+            padding-bottom: 60px;  /* To prevent overlap with the input box */
+        }
         </style>
         """, 
         unsafe_allow_html=True
     )
 
+    # Create a container to ensure there's space for the sticky input
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+
+    # Display the chat history
+    display_chat()
+
+    # Close the chat container
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # Input for user questions
-    with st.container():
-        st.markdown('<div class="sticky">', unsafe_allow_html=True)
-        st.text_input(
-            "What would you like to know about the document?",
-            value=st.session_state.question_input,
-            on_change=handle_question,
-            key="question_input"
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sticky">', unsafe_allow_html=True)
+    st.text_input(
+        "What would you like to know about the document?",
+        value=st.session_state.question_input,
+        on_change=handle_question,
+        key="question_input"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
