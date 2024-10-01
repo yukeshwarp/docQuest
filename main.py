@@ -52,39 +52,19 @@ if st.session_state.document_data:
                 for chat in st.session_state.chat_history:
                     st.markdown(f"**Quest:** {chat['question']}")
                     st.markdown(f"**Finds:** {chat['answer']}")
-                    st.markdown(f"\n")
                     st.markdown("---")
-                    st.markdown(f"\n")
 
     # Display the chat history
     display_chat()
 
-    # Custom CSS for fixed input box at the bottom
-    st.markdown(
-        """
-        <style>
-        .fixed-input {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            padding: 10px;
-            border-top: 1px solid #e0e0e0;
-            z-index: 1;
-        }
-        </style>
-        """, 
-        unsafe_allow_html=True
-    )
-
-    # Input for user questions
-    with st.container():
-        st.markdown('<div class="fixed-input">', unsafe_allow_html=True)
+    # Create a container for the chat input at the bottom
+    input_container = st.container()
+    
+    # Input for user questions in the bottom container
+    with input_container:
         st.text_input(
             "What would you like to know about the document?",
             value=st.session_state.question_input,
             on_change=handle_question,
             key="question_input"
         )
-        st.markdown('</div>', unsafe_allow_html=True)
