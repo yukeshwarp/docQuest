@@ -50,11 +50,9 @@ if st.session_state.document_data:
             if st.session_state.chat_history:
                 st.subheader("Chats", divider="orange")
                 for chat in st.session_state.chat_history:
+                    st.markdown(f"\n")
                     st.markdown(f"**Quest:** {chat['question']}")
                     st.markdown(f"**Finds:** {chat['answer']}")
-                    st.markdown(f"\n")
-                    st.markdown("---")
-                    st.markdown(f"\n")
 
     # Display the chat history
     display_chat()
@@ -66,3 +64,6 @@ if st.session_state.document_data:
         on_change=handle_question,
         key="question_input"
     )
+
+    # Update chat display after handling the question
+    display_chat()
