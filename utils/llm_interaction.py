@@ -336,23 +336,32 @@ def check_page_relevance(doc_name, page, preprocessed_question):
 
         return None
 
-def ask_question(documents, question, chat_history):
-    headers = HEADERS
-    preprocessed_question = preprocess_text(question)
-
-    if is_summary_request(preprocessed_question):
-        combined_text = "\n".join(
-            page.get("full_text", "") for doc_data in documents.values() for page in doc_data["pages"]
-        )
-
-        def summarize_pages_in_batches(pages, batch_size=10):
+def summarize_pages_in_batches(pages, batch_size=10):
             summaries = []
             for i in range(0, len(pages), batch_size):
                 batch_pages = pages[i:i + batch_size]
-                combined_batch_text = "\n".join(page.get("full_text", "") for page in batch_pages)
+                combined_batch_text = "\n".join(
+                    f"Full Text: {page.get('full_text', '')}\nImage Explanation: {page.get('image_explanation', '')}"
+                    for page in batch_pages
+                )
+
+                # Apply NMF for topic extraction
+                vectorizer = TfidfVectorizer(stop_words='english')
+                tfidf_matrix = vectorizer.fit_transform([page.get('full_text', '') for page in batch_pages])
+                nmf_model = NMF(n_components=3, random_state=42)
+                nmf_topics = nmf_model.fit_transform(tfidf_matrix)
+
+                # Extract top terms for each topic
+                topic_terms = []
+                for topic_idx, topic in enumerate(nmf_model.components_):
+                    topic_terms.append([vectorizer.get_feature_names_out()[i] for i in topic.argsort()[:-5 - 1:-1]])
+
+                all_prominent_terms = [term for sublist in topic_terms for term in sublist]
 
                 batch_summary_prompt = f"""
                 Summarize the following content concisely while retaining the key points:
+                Additionally, ensure that the summary reflects the following prominent terms derived from the content:
+                {', '.join(all_prominent_terms)}
 
                 {combined_batch_text}
                 """
@@ -394,6 +403,15 @@ def ask_question(documents, question, chat_history):
                         time.sleep(backoff_time)
 
             return "\n\n".join(summaries)
+    
+
+def ask_question(documents, question, chat_history):
+    headers = HEADERS
+    preprocessed_question = preprocess_text(question)
+
+    if is_summary_request(preprocessed_question):
+        from sklearn.decomposition import NMF
+        from sklearn.feature_extraction.text import TfidfVectorizer
 
         all_pages = [
             page
