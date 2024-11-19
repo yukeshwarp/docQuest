@@ -245,7 +245,7 @@ def is_summary_request(question):
         """
         response = requests.post(
             f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-            headers=headers,
+            headers=HEADERS,
             json={
                 "model": model,
                 "messages": [
@@ -268,7 +268,7 @@ def is_summary_request(question):
             == "yes"
         )
 
-def check_page_relevance(doc_name, page):
+def check_page_relevance(doc_name, page, preprocessed_question):
         page_full_text = page.get("full_text", "No full text available")
         image_explanation = (
             "\n".join(
@@ -306,7 +306,7 @@ def check_page_relevance(doc_name, page):
             try:
                 response = requests.post(
                     f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-                    headers=headers,
+                    headers=HEADERS,
                     json=relevance_data,
                     timeout=60,
                 )
@@ -416,7 +416,7 @@ def ask_question(documents, question, chat_history):
     relevant_pages = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_page = {
-            executor.submit(check_page_relevance, doc_name, page): (doc_name, page)
+            executor.submit(check_page_relevance, doc_name, page, preprocessed_question): (doc_name, page, preprocessed_question)
             for doc_name, doc_data in documents.items()
             for page in doc_data["pages"]
         }
