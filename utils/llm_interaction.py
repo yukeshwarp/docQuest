@@ -381,7 +381,7 @@ def summarize_pages_in_batches(pages, batch_size=10):
                     try:
                         response = requests.post(
                             f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-                            headers=headers,
+                            headers=HEADERS,
                             json=batch_summary_data,
                             timeout=60,
                         )
