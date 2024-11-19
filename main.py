@@ -1,76 +1,200 @@
 import streamlit as st
-from utils.pdf_processing import process_pdf_pages
+import json
+import redis
+from utils.pdf_processing import process_pdf_task
 from utils.llm_interaction import ask_question
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import io
+from docx import Document
+import uuid
+import tiktoken
 
-# Initialize session state variables to avoid reloading and reprocessing
-if 'document_data' not in st.session_state:
-    st.session_state.document_data = None
-if 'chat_history' not in st.session_state:
+
+def count_tokens(text, model="gpt-4o"):
+    encoding = tiktoken.encoding_for_model(model)
+    tokens = encoding.encode(text)
+    return len(tokens)
+
+
+redis_client = redis.Redis(
+    host="yuktestredis.redis.cache.windows.net",
+    port=6379,
+    password="VBhswgzkLiRpsHVUf4XEI2uGmidT94VhuAzCaB2tVjs=",
+)
+
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if 'question_input' not in st.session_state:
-    st.session_state.question_input = ""
+if "doc_token" not in st.session_state:
+    st.session_state.doc_token = 0
 
-# Function to handle user question and get the answer
-def handle_question(prompt):
+
+def save_document_to_redis(session_id, file_name, document_data):
+    redis_key = f"{session_id}:document_data:{file_name}"
+    redis_client.set(redis_key, json.dumps(document_data))
+
+
+def get_document_from_redis(session_id, file_name):
+    redis_key = f"{session_id}:document_data:{file_name}"
+    data = redis_client.get(redis_key)
+    if data:
+        return json.loads(data)
+    return None
+
+
+def retrieve_user_documents_from_redis(session_id):
+    documents = {}
+    for key in redis_client.keys(f"{session_id}:document_data:*"):
+        file_name = key.decode().split(f"{session_id}:document_data:")[1]
+        documents[file_name] = get_document_from_redis(session_id, file_name)
+    return documents
+
+
+def handle_question(prompt, spinner_placeholder):
     if prompt:
-        # Use the cached document data for the query
-        answer = ask_question(st.session_state.document_data, prompt)
-        # Add the question-answer pair to the chat history
-        st.session_state.chat_history.append({"question": prompt, "answer": answer})
+        try:
+            documents_data = retrieve_user_documents_from_redis(
+                st.session_state.session_id
+            )
+            with spinner_placeholder:
+                st.spinner("Processing your question...")
+                answer, tot_tokens = ask_question(
+                    documents_data, prompt, st.session_state.chat_history
+                )
+            st.session_state.chat_history.append(
+                {
+                    "question": prompt,
+                    "answer": f"{answer}\nTotal tokens: {tot_tokens}",
+                }
+            )
+        except Exception as e:
+            st.error(f"Error processing question: {e}")
+        finally:
+            spinner_placeholder.empty()
 
-# Streamlit application title
-st.title("docQuest")
 
-# Sidebar for file upload and document information
+def reset_session():
+    st.session_state.chat_history = []
+    st.session_state.doc_token = 0
+    for key in redis_client.keys(f"{st.session_state.session_id}:document_data:*"):
+        redis_client.delete(key)
+
+
+def display_chat():
+    if st.session_state.chat_history:
+        for i, chat in enumerate(st.session_state.chat_history):
+            user_message = f"""
+            <div style='padding:10px; border-radius:10px; margin:5px 0; text-align:right;'>
+            {chat['question']}
+            </div>
+            """
+            assistant_message = f"""
+            <div style='padding:10px; border-radius:10px; margin:5px 0; text-align:left;'>
+            {chat['answer']}
+            </div>
+            """
+            st.markdown(user_message, unsafe_allow_html=True)
+            st.markdown(assistant_message, unsafe_allow_html=True)
+            chat_content = {
+                "question": chat["question"],
+                "answer": chat["answer"],
+            }
+            doc = generate_word_document(chat_content)
+            word_io = io.BytesIO()
+            doc.save(word_io)
+            word_io.seek(0)
+            st.download_button(
+                label="Download Response",
+                data=word_io,
+                file_name=f"chat_{i + 1}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+
+
+def generate_word_document(content):
+    doc = Document()
+    doc.add_heading("Chat Response", 0)
+    doc.add_paragraph(f"Question: {content['question']}")
+    doc.add_paragraph(f"Answer: {content['answer']}")
+    return doc
+
+
 with st.sidebar:
-    st.subheader("docQuest")
-    
-    # File uploader
-    uploaded_file = st.file_uploader("Upload and manage files here", type=["pdf"])
+    st.write(f"**Total Document Tokens:** {st.session_state.doc_token}")
+    uploaded_files = st.file_uploader(
+        "Upload your documents",
+        type=["pdf", "docx", "xlsx", "pptx"],
+        accept_multiple_files=True,
+        help="Supports PDF, DOCX, XLSX, and PPTX formats.",
+    )
 
-    # Process the PDF if uploaded and either not processed or a new file is uploaded
-    if uploaded_file:
-        # Check if the uploaded file is new or different from the previously uploaded file
-        if 'last_uploaded_file' not in st.session_state or st.session_state.last_uploaded_file != uploaded_file:
-            st.session_state.last_uploaded_file = uploaded_file
-            st.session_state.document_data = None  # Reset document data
-            st.session_state.chat_history = []  # Reset chat history
-            
-        # Process the PDF if not already processed
-        if st.session_state.document_data is None:
-            with st.spinner('Processing PDF...'):
-                st.session_state.document_data = process_pdf_pages(uploaded_file)
-            st.success("PDF processed successfully! Let's explore your document.")
+    if uploaded_files:
+        new_files = []
+        for uploaded_file in uploaded_files:
+            if not redis_client.exists(
+                f"{st.session_state.session_id}:document_data:{uploaded_file.name}"
+            ):
+                new_files.append(uploaded_file)
+            else:
+                st.info(f"{uploaded_file.name} is already uploaded.")
 
-# Main page for chat interaction
-if st.session_state.document_data:
-    st.subheader("Let us know more about your document..")
-    
-    # Create a placeholder container for chat history
-    chat_placeholder = st.empty()
+        if new_files:
+            progress_text = st.empty()
+            progress_bar = st.progress(0)
+            total_files = len(new_files)
 
-    # Function to display chat history dynamically
-    def display_chat():
-        with chat_placeholder.container():
-            if st.session_state.chat_history:
-                st.subheader("Chats", divider="orange")
-                for chat in st.session_state.chat_history:
-                    # ChatGPT-like alignment: user input on the right, assistant response on the left                
-                    user_chat = f"<div style='float: right; display: inline-block; margin: 5px; border-radius: 8px; padding: 10px; margin-left: 3vw;'> {chat['question']}</div>"
-                    assistant_chat = f"<div style='float: left; display: inline-block; margin: 5px; border-radius: 8px; padding: 10px; margin-right: 3vw;'> {chat['answer']}</div>"                    
-                    st.markdown(f"\n")
-                    st.markdown(user_chat, unsafe_allow_html=True)
-                    st.markdown(assistant_chat, unsafe_allow_html=True)
-                    st.markdown("---")
+            with st.spinner("Processing documents..."):
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    future_to_file = {
+                        executor.submit(
+                            process_pdf_task, uploaded_file, first_file=(index == 0)
+                        ): uploaded_file
+                        for index, uploaded_file in enumerate(new_files)
+                    }
 
-    # Display the chat history
-    display_chat()
+                    for i, future in enumerate(as_completed(future_to_file)):
+                        uploaded_file = future_to_file[future]
+                        try:
+                            document_data = future.result()
+                            st.session_state.doc_token += count_tokens(
+                                str(document_data)
+                            )
+                            save_document_to_redis(
+                                st.session_state.session_id,
+                                uploaded_file.name,
+                                document_data,
+                            )
+                            st.success(f"{uploaded_file.name} processed successfully!")
+                        except Exception as e:
+                            st.error(f"Error processing {uploaded_file.name}: {e}")
 
-    # Input for user questions using chat input
-    prompt = st.chat_input("Let me know what you want to know about your document..", key="chat_input")
-    
-    # Check if the prompt has been updated
+                        progress_bar.progress((i + 1) / total_files)
+
+            st.sidebar.write(f"**Total Document Tokens:** {st.session_state.doc_token}")
+            progress_text.text("All documents processed.")
+            progress_bar.empty()
+
+    if retrieve_user_documents_from_redis(st.session_state.session_id):
+        download_data = json.dumps(
+            retrieve_user_documents_from_redis(st.session_state.session_id), indent=4
+        )
+        st.download_button(
+            label="Download Document Analysis",
+            data=download_data,
+            file_name="document_analysis.json",
+            mime="application/json",
+        )
+
+st.image("logoD.png", width=200)
+st.title("docQuest")
+st.subheader("Unveil the Essence, Compare Easily, Analyze Smartly")
+
+if retrieve_user_documents_from_redis(st.session_state.session_id):
+    prompt = st.chat_input("Ask me anything about your documents", key="chat_input")
+    spinner_placeholder = st.empty()
     if prompt:
-        handle_question(prompt)  # Call the function to handle the question
-        st.session_state.question_input = ""  # Clear the input field after sending
-        display_chat()  # Re-display the chat after adding the new entry
+        handle_question(prompt, spinner_placeholder)
+
+display_chat()

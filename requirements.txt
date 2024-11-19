@@ -3,3 +3,10 @@ PyMuPDF
 requests
 Pillow
 python-dotenv
+tiktoken
+nltk
+python-docx
+celery
+redis
+azure-storage-blob
+scikit-learn
