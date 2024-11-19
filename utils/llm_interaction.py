@@ -341,7 +341,7 @@ def summarize_pages_in_batches(pages, batch_size=10):
             for i in range(0, len(pages), batch_size):
                 batch_pages = pages[i:i + batch_size]
                 combined_batch_text = "\n".join(
-                    f"Full Text: {page.get('full_text', '')}\nImage Explanation: {page.get('image_explanation', '')}"
+                    f"Page {page['page_number']}, Full Text: {page.get('full_text', '')}\nImage Explanation: {page.get('image_explanation', '')}"
                     for page in batch_pages
                 )
 
@@ -359,9 +359,9 @@ def summarize_pages_in_batches(pages, batch_size=10):
                 all_prominent_terms = [term for sublist in topic_terms for term in sublist]
 
                 batch_summary_prompt = f"""
-                Summarize the following content concisely while retaining the key points:
+                Summarize the following content concisely while retaining the key points and mention range of pages given as input:
                 Additionally, ensure that the summary reflects the following prominent terms derived from the content:
-                Present the summary in a proper human readable format using subheadings and bullets wherever necessary:
+                Present the summary in a proper human readable format using subheadings and bullets wherever necessary. Don't mention as summary:
                 {', '.join(all_prominent_terms)}
 
                 {combined_batch_text}
