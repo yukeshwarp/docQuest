@@ -361,6 +361,7 @@ def summarize_pages_in_batches(pages, batch_size=10):
                 batch_summary_prompt = f"""
                 Summarize the following content concisely while retaining the key points:
                 Additionally, ensure that the summary reflects the following prominent terms derived from the content:
+                Present the summary in a proper human readable format using subheadings and bullets wherever necessary:
                 {', '.join(all_prominent_terms)}
 
                 {combined_batch_text}
