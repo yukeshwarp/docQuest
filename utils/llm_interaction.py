@@ -236,12 +236,7 @@ def summarize_page(
             )
             time.sleep(jitter)
 
-
-def ask_question(documents, question, chat_history):
-    headers = HEADERS
-    preprocessed_question = preprocess_text(question)
-
-    def is_summary_request(question):
+def is_summary_request(question):
         summary_check_prompt = f"""
         The user asked the question: {question}
         
@@ -273,79 +268,7 @@ def ask_question(documents, question, chat_history):
             == "yes"
         )
 
-    if is_summary_request(preprocessed_question):
-        combined_text = "\n".join(
-            page.get("full_text", "") for doc_data in documents.values() for page in doc_data["pages"]
-        )
-
-        # Topic modeling with NMF
-        vectorizer = TfidfVectorizer(stop_words='english')
-        tfidf_matrix = vectorizer.fit_transform([combined_text])
-        nmf_model = NMF(n_components=5, random_state=1)
-        nmf_topics = nmf_model.fit_transform(tfidf_matrix)
-
-        # Extract prominent topics and terms
-        topic_terms = []
-        for topic_idx, topic in enumerate(nmf_model.components_):
-            topic_terms.append([vectorizer.get_feature_names_out()[i] for i in topic.argsort()[:-5 - 1:-1]])
-
-        # Create a list of prominent terms from all topics
-        all_prominent_terms = [term for sublist in topic_terms for term in sublist]
-
-        def get_page_topic_relevance(page_text):
-            page_vectorized = vectorizer.transform([page_text])
-            topic_scores = nmf_model.transform(page_vectorized)
-            return sum(topic_scores[0])
-
-        relevant_page_summaries = [
-            page.get("text_summary", "")
-            for doc_name, doc_data in documents.items()
-            for page in doc_data["pages"]
-            if get_page_topic_relevance(page.get("full_text", "")) > 0
-        ]
-
-        combined_summary_prompt = f"""
-        Combine the following summaries into a single, comprehensive summary of the document.
-        Ensure the summary is thorough yet concise, presenting the key points in a structured, readable format using subheaders and bullets that highlights major themes, initiatives, and strategies discussed in the document:
-
-        {' '.join(relevant_page_summaries)}
-        """
-        final_summary_data = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an assistant that creates a document summary.",
-                },
-                {"role": "user", "content": combined_summary_prompt},
-            ],
-            "temperature": 0.0,
-        }
-        final_response = requests.post(
-            f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-            headers=headers,
-            json=final_summary_data,
-        )
-        final_summary = (
-            final_response.json()
-            .get("choices", [{}])[0]
-            .get("message", {})
-            .get("content", "No summary provided.")
-        )
-
-        total_tokens = final_response.json().get("usage", {}).get("total_tokens", 0)
-
-        return final_summary, total_tokens
-
-    total_tokens = count_tokens(preprocessed_question)
-
-    for doc_name, doc_data in documents.items():
-        for page in doc_data["pages"]:
-            total_tokens += count_tokens(
-                page.get("full_text", "No full text available")
-            )
-
-    def check_page_relevance(doc_name, page):
+def check_page_relevance(doc_name, page):
         page_full_text = page.get("full_text", "No full text available")
         image_explanation = (
             "\n".join(
@@ -413,6 +336,83 @@ def ask_question(documents, question, chat_history):
 
         return None
 
+def ask_question(documents, question, chat_history):
+    headers = HEADERS
+    preprocessed_question = preprocess_text(question)
+
+    if is_summary_request(preprocessed_question):
+        combined_text = "\n".join(
+            page.get("full_text", "") for doc_data in documents.values() for page in doc_data["pages"]
+        )
+
+        def summarize_pages_in_batches(pages, batch_size=10):
+            summaries = []
+            for i in range(0, len(pages), batch_size):
+                batch_pages = pages[i:i + batch_size]
+                combined_batch_text = "\n".join(page.get("full_text", "") for page in batch_pages)
+
+                batch_summary_prompt = f"""
+                Summarize the following content concisely while retaining the key points:
+
+                {combined_batch_text}
+                """
+                batch_summary_data = {
+                    "model": model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are an assistant that creates concise summaries.",
+                        },
+                        {"role": "user", "content": batch_summary_prompt},
+                    ],
+                    "temperature": 0.0,
+                }
+
+                for attempt in range(5):
+                    try:
+                        response = requests.post(
+                            f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
+                            headers=headers,
+                            json=batch_summary_data,
+                            timeout=60,
+                        )
+                        response.raise_for_status()
+                        batch_summary = (
+                            response.json()
+                            .get("choices", [{}])[0]
+                            .get("message", {})
+                            .get("content", "")
+                            .strip()
+                        )
+                        summaries.append(batch_summary)
+                        break
+                    except requests.exceptions.RequestException as e:
+                        logging.error(
+                            f"Error summarizing batch starting at page {i}: {e}"
+                        )
+                        backoff_time = (2**attempt) + random.uniform(0, 1)
+                        time.sleep(backoff_time)
+
+            return "\n\n".join(summaries)
+
+        all_pages = [
+            page
+            for doc_data in documents.values()
+            for page in doc_data["pages"]
+        ]
+        final_summary = summarize_pages_in_batches(all_pages)
+
+        total_tokens = count_tokens(final_summary)
+        return final_summary, total_tokens
+
+    total_tokens = count_tokens(preprocessed_question)
+
+    for doc_name, doc_data in documents.items():
+        for page in doc_data["pages"]:
+            total_tokens += count_tokens(
+                page.get("full_text", "No full text available")
+            )
+
     relevant_pages = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_page = {
@@ -438,95 +438,7 @@ def ask_question(documents, question, chat_history):
     )
     relevant_tokens = count_tokens(relevant_pages_content)
 
-    if relevant_tokens <= 125000:
-        combined_relevant_content = relevant_pages_content
-    else:
-        page_summaries = []
-        for page in relevant_pages:
-            page_summary_prompt = f"""
-            Summarize the following page content briefly:
-
-            Document: {page['doc_name']}, Page {page['page_number']}
-            Full Text: {page['full_text']}
-            Image Analysis: {page['image_explanation']}
-            """
-            summary_data = {
-                "model": model,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are an assistant that summarizes page content concisely.",
-                    },
-                    {"role": "user", "content": page_summary_prompt},
-                ],
-                "temperature": 0.0,
-            }
-            for attempt in range(5):
-                try:
-                    response = requests.post(
-                        f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-                        headers=headers,
-                        json=summary_data,
-                        timeout=60,
-                    )
-                    response.raise_for_status()
-                    page_summary = (
-                        response.json()
-                        .get("choices", [{}])[0]
-                        .get("message", {})
-                        .get("content", "")
-                        .strip()
-                    )
-                    page_summaries.append(page_summary)
-                    break
-                except requests.exceptions.RequestException as e:
-                    logging.error(
-                        f"Error summarizing page {page['page_number']} in '{page['doc_name']}': {e}"
-                    )
-                    backoff_time = (2**attempt) + random.uniform(0, 1)
-                    time.sleep(backoff_time)
-
-        combined_page_summaries = "\n".join(page_summaries)
-        section_summary_prompt = f"""
-        Combine the following summaries into a concise summary that captures the overall information:
-
-        {combined_page_summaries}
-        """
-        section_summary_data = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an assistant that creates a concise summary from multiple summaries.",
-                },
-                {"role": "user", "content": section_summary_prompt},
-            ],
-            "temperature": 0.0,
-        }
-
-        for attempt in range(5):
-            try:
-                response = requests.post(
-                    f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-                    headers=headers,
-                    json=section_summary_data,
-                    timeout=60,
-                )
-                response.raise_for_status()
-                combined_relevant_content = (
-                    response.json()
-                    .get("choices", [{}])[0]
-                    .get("message", {})
-                    .get("content", "No summary provided.")
-                    .strip()
-                )
-                break
-            except requests.exceptions.RequestException as e:
-                logging.error("Error combining summaries: {}".format(e))
-                backoff_time = (2**attempt) + random.uniform(0, 1)
-                time.sleep(backoff_time)
-        else:
-            return "Error processing question.", total_tokens
+    combined_relevant_content = relevant_pages_content if relevant_tokens <= 125000 else "Content is too large to process."
 
     conversation_history = "".join(
         f"User: {preprocess_text(chat['question'])}\nAssistant: {preprocess_text(chat['answer'])}\n"
