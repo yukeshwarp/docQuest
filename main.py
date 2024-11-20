@@ -8,6 +8,7 @@ import io
 from docx import Document
 import uuid
 import tiktoken
+from docx.shared import Pt
 
 
 def count_tokens(text, model="gpt-4o"):
@@ -112,13 +113,36 @@ def display_chat():
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             )
 
-
 def generate_word_document(content):
     doc = Document()
-    doc.add_heading("Chat Response", 0)
-    doc.add_paragraph(f"Question: {content['question']}")
-    doc.add_paragraph(f"Answer: {content['answer']}")
+    
+    # Set up the heading with Aptos font
+    heading = doc.add_heading("Chat Response", level=0)
+    heading.runs[0].font.name = "Aptos"
+    heading.runs[0].font.size = Pt(14)
+    
+    # Add the question with Aptos font
+    question_para = doc.add_paragraph()
+    question_run = question_para.add_run("Question: ")
+    question_run.font.name = "Aptos"
+    question_run.font.size = Pt(12)
+    
+    question_text = question_para.add_run(content["question"])
+    question_text.font.name = "Aptos"
+    question_text.font.size = Pt(12)
+    
+    # Add the answer with Aptos font
+    answer_para = doc.add_paragraph()
+    answer_run = answer_para.add_run("Answer: ")
+    answer_run.font.name = "Aptos"
+    answer_run.font.size = Pt(12)
+    
+    answer_text = answer_para.add_run(content["answer"])
+    answer_text.font.name = "Aptos"
+    answer_text.font.size = Pt(12)
+    
     return doc
+
 
 
 with st.sidebar:
