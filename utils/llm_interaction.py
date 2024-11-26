@@ -405,76 +405,58 @@ def summarize_pages_in_batches(pages, batch_size=10):
 
             return "\n\n".join(summaries)
     
+def is_detailed_summary_request(question):
+    """
+    Determines if the user's question is asking for a detailed summary using an LLM.
+
+    Args:
+        question (str): The user's question.
+
+    Returns:
+        bool: True if the question asks for a detailed, pagewise, or topic-wise summary; False otherwise.
+    """
+    # LLM prompt to classify the intent
+    intent_prompt = f"""
+    You are an assistant that classifies user intents. The user's question will be provided, 
+    and you must determine if the question explicitly asks for a detailed summary, 
+    pagewise summary, or topic-wise summary. 
+    Respond with 'Yes' if it asks for any of these, otherwise respond with 'No'.
+
+    User's question: {question}
+    """
+
+    # Prepare data for the LLM request
+    data = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant that classifies intents."},
+            {"role": "user", "content": intent_prompt},
+        ],
+        "temperature": 0.0,
+    }
+
+    try:
+        # Make a request to the LLM
+        response = requests.post(
+            f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
+            headers=HEADERS,
+            json=data,
+            timeout=60,
+        )
+        response.raise_for_status()
+
+        # Extract the LLM's response
+        llm_response = response.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+
+        # Interpret the LLM's response
+        return llm_response.lower() == "yes"
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error determining intent: {e}")
+        return False
+
 
 def ask_question(documents, question, chat_history):
-    headers = HEADERS
-    preprocessed_question = preprocess_text(question)
-
-    if is_summary_request(preprocessed_question):
-        from sklearn.decomposition import NMF
-        from sklearn.feature_extraction.text import TfidfVectorizer
-
-        all_pages = [
-            page
-            for doc_data in documents.values()
-            for page in doc_data["pages"]
-        ]
-        final_summary = summarize_pages_in_batches(all_pages)
-
-        total_tokens = count_tokens(final_summary)
-        return final_summary, total_tokens
-
-    total_tokens = count_tokens(preprocessed_question)
-
-    for doc_name, doc_data in documents.items():
-        for page in doc_data["pages"]:
-            total_tokens += count_tokens(
-                page.get("full_text", "No full text available")
-            )
-
-    relevant_pages = []
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future_to_page = {
-            executor.submit(check_page_relevance, doc_name, page, preprocessed_question): (doc_name, page, preprocessed_question)
-            for doc_name, doc_data in documents.items()
-            for page in doc_data["pages"]
-        }
-
-        for future in concurrent.futures.as_completed(future_to_page):
-            result = future.result()
-            if result:
-                relevant_pages.append(result)
-
-    if not relevant_pages:
-        return (
-            "The content of the provided documents does not contain an answer to your question.",
-            total_tokens,
-        )
-
-    relevant_pages_content = "\n".join(
-        f"Document: {page['doc_name']}, Page {page['page_number']}\nFull Text: {page['full_text']}\nImage Analysis: {page['image_explanation']}"
-        for page in relevant_pages
-    )
-    relevant_tokens = count_tokens(relevant_pages_content)
-
-    combined_relevant_content = relevant_pages_content if relevant_tokens <= 125000 else "Content is too large to process."
-
-    conversation_history = "".join(
-        f"User: {preprocess_text(chat['question'])}\nAssistant: {preprocess_text(chat['answer'])}\n"
-        for chat in chat_history
-    )
-
-    prompt_message = f"""
-        You are given the following relevant content from multiple documents:
-
-        ---
-        {combined_relevant_content}
-        ---
-
-        Previous responses over the current chat session: {conversation_history}
-
-        Answer the following question based **strictly and only** on the factual information provided in the content above.
-        Carefully verify all details from the contdef ask_question(documents, question, chat_history):
     headers = HEADERS
     preprocessed_question = preprocess_text(question)
 
@@ -482,8 +464,6 @@ def ask_question(documents, question, chat_history):
     if is_summary_request(preprocessed_question):
         # Handle specific types of summaries
         if is_detailed_summary_request(preprocessed_question):
-            from sklearn.decomposition import NMF
-            from sklearn.feature_extraction.text import TfidfVectorizer
 
             # Combine all pages into a single text corpus
             combined_text = "\n".join(
