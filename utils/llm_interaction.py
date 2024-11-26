@@ -474,6 +474,150 @@ def ask_question(documents, question, chat_history):
         Previous responses over the current chat session: {conversation_history}
 
         Answer the following question based **strictly and only** on the factual information provided in the content above.
+        Carefully verify all details from the contdef ask_question(documents, question, chat_history):
+    headers = HEADERS
+    preprocessed_question = preprocess_text(question)
+
+    # Check for summary-related intents
+    if is_summary_request(preprocessed_question):
+        # Handle specific types of summaries
+        if is_detailed_summary_request(preprocessed_question):
+            from sklearn.decomposition import NMF
+            from sklearn.feature_extraction.text import TfidfVectorizer
+
+            # Combine all pages into a single text corpus
+            combined_text = "\n".join(
+                page.get("full_text", "") for doc_data in documents.values() for page in doc_data["pages"]
+            )
+
+            # Perform NMF topic modeling
+            vectorizer = TfidfVectorizer(stop_words='english')
+            tfidf_matrix = vectorizer.fit_transform([combined_text])
+            nmf_model = NMF(n_components=5, random_state=1)
+            nmf_topics = nmf_model.fit_transform(tfidf_matrix)
+
+            # Extract prominent terms for each topic
+            topic_terms = []
+            for topic_idx, topic in enumerate(nmf_model.components_):
+                topic_terms.append([vectorizer.get_feature_names_out()[i] for i in topic.argsort()[:-6:-1]])
+
+            # Flatten the terms from all topics
+            all_prominent_terms = [term for sublist in topic_terms for term in sublist]
+
+            # Define a function to calculate topic relevance for a page
+            def get_page_topic_relevance(page_text):
+                page_vectorized = vectorizer.transform([page_text])
+                topic_scores = nmf_model.transform(page_vectorized)
+                return sum(topic_scores[0])
+
+            # Select relevant pages based on topic relevance
+            relevant_page_summaries = [
+                page.get("text_summary", "")
+                for doc_name, doc_data in documents.items()
+                for page in doc_data["pages"]
+                if get_page_topic_relevance(page.get("full_text", "")) > 0
+            ]
+
+            # Combine relevant page summaries
+            combined_summary_prompt = f"""
+            Combine the following summaries into a single, comprehensive summary of the document.
+            Ensure the summary is thorough yet concise, presenting the key points in a structured, readable format using subheaders and bullets that highlight major themes and strategies:
+
+            {' '.join(relevant_page_summaries)}
+            """
+
+            # Prepare request for LLM
+            final_summary_data = {
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are an assistant that creates a document summary.",
+                    },
+                    {"role": "user", "content": combined_summary_prompt},
+                ],
+                "temperature": 0.0,
+            }
+
+            # Call the LLM to generate the final summary
+            final_response = requests.post(
+                f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
+                headers=headers,
+                json=final_summary_data,
+            )
+            final_summary = (
+                final_response.json()
+                .get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "No summary provided.")
+            )
+
+            total_tokens = final_response.json().get("usage", {}).get("total_tokens", 0)
+
+            return final_summary, total_tokens
+
+        else:
+            # Perform batch summarization if it's a specific summary request
+            all_pages = [
+                page
+                for doc_data in documents.values()
+                for page in doc_data["pages"]
+            ]
+            final_summary = summarize_pages_in_batches(all_pages)
+            total_tokens = count_tokens(final_summary)
+            return final_summary, total_tokens
+
+    # If not a summary request, proceed with question answering
+    total_tokens = count_tokens(preprocessed_question)
+
+    for doc_name, doc_data in documents.items():
+        for page in doc_data["pages"]:
+            total_tokens += count_tokens(
+                page.get("full_text", "No full text available")
+            )
+
+    relevant_pages = []
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_page = {
+            executor.submit(check_page_relevance, doc_name, page, preprocessed_question): (doc_name, page, preprocessed_question)
+            for doc_name, doc_data in documents.items()
+            for page in doc_data["pages"]
+        }
+
+        for future in concurrent.futures.as_completed(future_to_page):
+            result = future.result()
+            if result:
+                relevant_pages.append(result)
+
+    if not relevant_pages:
+        return (
+            "The content of the provided documents does not contain an answer to your question.",
+            total_tokens,
+        )
+
+    relevant_pages_content = "\n".join(
+        f"Document: {page['doc_name']}, Page {page['page_number']}\nFull Text: {page['full_text']}\nImage Analysis: {page['image_explanation']}"
+        for page in relevant_pages
+    )
+    relevant_tokens = count_tokens(relevant_pages_content)
+
+    combined_relevant_content = relevant_pages_content if relevant_tokens <= 125000 else "Content is too large to process."
+
+    conversation_history = "".join(
+        f"User: {preprocess_text(chat['question'])}\nAssistant: {preprocess_text(chat['answer'])}\n"
+        for chat in chat_history
+    )
+
+    prompt_message = f"""
+        You are given the following relevant content from multiple documents:
+
+        ---
+        {combined_relevant_content}
+        ---
+
+        Previous responses over the current chat session: {conversation_history}
+
+        Answer the following question based **strictly and only** on the factual information provided in the content above.
         Carefully verify all details from the content and do not generate any information that is not explicitly mentioned in it.
         Ensure the response is clearly formatted for readability.
 
