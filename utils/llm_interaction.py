@@ -406,23 +406,16 @@ def summarize_pages_in_batches(pages, batch_size=10):
             return "\n\n".join(summaries)
     
 def is_detailed_summary_request(question):
-    """
-    Determines if the user's question is asking for a detailed summary using an LLM.
-
-    Args:
-        question (str): The user's question.
-
-    Returns:
-        bool: True if the question asks for a detailed, pagewise, or topic-wise summary; False otherwise.
-    """
+    headers = HEADERS
     # LLM prompt to classify the intent
     intent_prompt = f"""
     You are an assistant that classifies user intents. The user's question will be provided, 
     and you must determine if the question explicitly asks for a detailed summary, 
     pagewise summary, or topic-wise summary. 
-    Respond with 'Yes' if it asks for any of these, otherwise respond with 'No'.
 
     User's question: {question}
+
+    Respond with only "yes" or "no".
     """
 
     # Prepare data for the LLM request
@@ -439,17 +432,18 @@ def is_detailed_summary_request(question):
         # Make a request to the LLM
         response = requests.post(
             f"{azure_endpoint}/openai/deployments/{model}/chat/completions?api-version={api_version}",
-            headers=HEADERS,
+            headers=headers,
             json=data,
             timeout=60,
         )
         response.raise_for_status()
 
         # Extract the LLM's response
-        llm_response = response.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        #llm_response = response.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
 
         # Interpret the LLM's response
-        return llm_response.lower() == "yes"
+        return (response.json().get("choices", [{}])[0].get("message", {}).get("content", "no").strip().lower()== "yes")
+        #return llm_response.lower() == "yes"
 
     except requests.exceptions.RequestException as e:
         logging.error(f"Error determining intent: {e}")
@@ -463,7 +457,7 @@ def ask_question(documents, question, chat_history):
     # Check for summary-related intents
     if is_summary_request(preprocessed_question):
         # Handle specific types of summaries
-        if is_detailed_summary_request(preprocessed_question):
+        if not is_detailed_summary_request(preprocessed_question):
 
             # Combine all pages into a single text corpus
             combined_text = "\n".join(
