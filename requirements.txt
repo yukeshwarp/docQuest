@@ -10,3 +10,7 @@ celery
 redis
 azure-storage-blob
 scikit-learn
+PyPDF2
+python-pptx
+python-docx
+azure-storage-blob
