@@ -370,6 +370,7 @@ def ask_question(documents, question, chat_history):
             
             combined_summary_prompt = f"""
             Combine the following summaries into a single, comprehensive summary of the document.
+            Provide line or paragraph number attribution if present.
             Ensure the summary is thorough yet concise, presenting the key points in a structured, readable format using subheaders and bullets that highlight major themes and strategies:
 
             {' '.join(relevant_page_summaries)}
@@ -481,6 +482,7 @@ def ask_question(documents, question, chat_history):
         Answer the following question based **strictly and only** on the factual information provided in the content above.
         Carefully verify all details from the content and do not generate any information that is not explicitly mentioned in it.
         Mention the page numbers from the document that attribute to the answer.
+        Provide line or paragraph number attribution if present.
         Ensure the response is clearly formatted for readability using subheadings and bullets if necessary.
 
         Question: {preprocessed_question}
