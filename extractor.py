@@ -176,6 +176,9 @@ def summarize_page(
     max_delay=32,
 ):
     headers = HEADERS
+    
+    pattern = r"\[\d{4}\]"  
+    paragraph_numbers = re.findall(pattern, page_text)
     preprocessed_page_text = preprocess_text(page_text)
     preprocessed_previous_summary = preprocess_text(previous_summary)
 
@@ -210,13 +213,14 @@ def summarize_page(
             logging.info(
                 f"Summary retrieved for page {page_number} at {time.strftime('%Y-%m-%d %H:%M:%S')}"
             )
-            return (
+            summary = (
                 response.json()
                 .get("choices", [{}])[0]
                 .get("message", {})
                 .get("content", "No summary provided.")
                 .strip()
-            )
+            ) 
+            return f"{summary}\n Paragraph attribution(If paragraph number is present in the document: {paragraph_numbers}"
 
         except requests.exceptions.RequestException as e:
             attempt += 1
