@@ -125,7 +125,7 @@ def handle_question(prompt, spinner_placeholder):
             bing_results = search_bing(search_str, bing_key, bing_endpoint)
 
             # Add the Bing search results to the answer
-            answer += "\n\nGo to the internet for more information:\n"
+            answer += "\n\nMore on web:\n"
             for i, link in enumerate(bing_results, start=1):
                 # Parse the URL and extract the hostname (domain)
                 domain = urlparse(link).netloc
