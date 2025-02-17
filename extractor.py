@@ -183,7 +183,7 @@ def summarize_page(
         f"Please rewrite the following page content from (Page {page_number}) along with context flow from the previous page summary, but do not include complete summary from previous page "
         f"to make them concise and well-structured. Maintain proper listing and referencing of the contents if present."
         f"Do not add any new information or make assumptions. Keep the meaning accurate and the language clear.\n\n"
-        f"Maintain attribution to line or paragraph if present\n"
+        f"Maintain attribution to line or paragraph if present in the current page content\n"
         f"Previous page summary: {preprocessed_previous_summary}\n\n"
         f"Current page content:\n{preprocessed_page_text}\n"
     )
