@@ -90,7 +90,8 @@ def process_page_batch(pdf_document, batch, system_prompt, ocr_text_threshold=0.
             page = pdf_document.load_page(page_number)
             text = remove_stopwords_and_blanks(page.get_text("text").strip())
             summary = ""
-
+            pattern = r"\[\d{4}\]"  
+            paragraph_numbers = re.findall(pattern, page.get_text("text").strip())  
             if text != "":
                 summary = summarize_page(
                     text, previous_summary, page_number + 1, system_prompt
@@ -108,7 +109,7 @@ def process_page_batch(pdf_document, batch, system_prompt, ocr_text_threshold=0.
                 )
             return {
                 "page_number": page_number + 1,
-                "full_text": text,
+                "full_text": f"{text}\n Paragraph attribution of the page if given in document: {paragraph_numbers}",
                 "text_summary": summary,
                 "image_analysis": image_analysis,
             }
