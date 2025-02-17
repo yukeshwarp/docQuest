@@ -129,7 +129,7 @@ def handle_question(prompt, spinner_placeholder):
             for i, link in enumerate(bing_results, start=1):
                 # Parse the URL and extract the hostname (domain)
                 domain = urlparse(link).netloc
-                answer += f"[{i}]({link})\n"
+                answer += f"🔗 [{domain}]({link})\n"
 
             # Append the question and answer to chat history
             st.session_state.chat_history.append(
