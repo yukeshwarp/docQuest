@@ -16,7 +16,7 @@ from extractor import (
 from utils.config import redis_host, redis_pass
 import tiktoken
 import streamlit as st
-
+import re
 
 def count_tokens(text, model="gpt-4o"):
     encoding = tiktoken.encoding_for_model(model)
