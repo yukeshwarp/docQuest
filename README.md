@@ -1,4 +1,3 @@
-````markdown name=README.md
 # docQuest
 
 **docQuest** is an intelligent document analysis and question-answering application powered by LLMs (Large Language Models) and Azure OpenAI. It allows users to upload documents (PDF, Word, Excel, etc.), analyze their content, and interactively ask questions or request summaries, all via a user-friendly web interface built on Streamlit.
