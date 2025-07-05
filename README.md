@@ -2,22 +2,9 @@
 
 **docQuest** is an intelligent document analysis and question-answering application powered by LLMs (Large Language Models) and Azure OpenAI. It allows users to upload documents (PDF, Word, Excel, etc.), analyze their content, and interactively ask questions or request summaries, all via a user-friendly web interface built on Streamlit.
 
-## Features
-
-- **Multi-format Document Upload:** Supports PDF, DOCX, XLSX, CSV, PPTX, and more.
-- **Document Parsing & Storage:** Documents are preprocessed, tokenized, persisted in Redis (for session state), and also uploaded to Azure Blob Storage.
-- **LLM-Powered Q&A:** Ask questions about your uploaded documents, retrieve contextual answers, and get references to source documents.
-- **Automatic Summarization:** Request detailed or topic-wise summaries of your documents.
-- **Bing Web Search Integration:** Augments answers with relevant Bing search results for broader context.
-- **Chat History & Export:** Every Q&A session is saved in chat history, with the ability to download chat responses as formatted Word documents.
-- **Token Management:** Handles large documents by tracking token usage and warning when limits are exceeded.
-- **Concurrent Processing:** Efficiently processes multiple documents using batch logic.
-- **Document Insights:** Extracts metadata like domain, subject matter, expertise level, style, and tone from document content.
-
 ## Table of Contents
 
 - [Features](#features)
-- [Screenshots](#screenshots)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -31,10 +18,17 @@
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 
-## Screenshots
+## Features
 
-*(Add screenshots here if available)*
-
+- **Multi-format Document Upload:** Supports PDF, DOCX, XLSX, CSV, PPTX, and more.
+- **Document Parsing & Storage:** Documents are preprocessed, tokenized, persisted in Redis (for session state), and also uploaded to Azure Blob Storage.
+- **LLM-Powered Q&A:** Ask questions about your uploaded documents, retrieve contextual answers, and get references to source documents.
+- **Automatic Summarization:** Request detailed or topic-wise summaries of your documents.
+- **Bing Web Search Integration:** Augments answers with relevant Bing search results for broader context.
+- **Chat History & Export:** Every Q&A session is saved in chat history, with the ability to download chat responses as formatted Word documents.
+- **Token Management:** Handles large documents by tracking token usage and warning when limits are exceeded.
+- **Concurrent Processing:** Efficiently processes multiple documents using batch logic.
+- **Document Insights:** Extracts metadata like domain, subject matter, expertise level, style, and tone from document content.
 ---
 
 ## Getting Started
@@ -164,23 +158,3 @@ See `requirements.txt` for the full list. Major libraries include:
 All sensitive credentials (Azure, Redis, Bing) must be provided as environment variables. See setup section above.
 
 ---
-
-## License
-
-MIT License
-
----
-
-## Contributing
-
-Pull requests and feature requests are welcome! Please open issues for bugs or feature suggestions.
-
----
-
-## Acknowledgements
-
-* Azure OpenAI
-* Streamlit
-* NLTK, scikit-learn
-* Bing Search API
-```
