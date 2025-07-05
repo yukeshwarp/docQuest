@@ -14,6 +14,23 @@
 - **Concurrent Processing:** Efficiently processes multiple documents using batch logic.
 - **Document Insights:** Extracts metadata like domain, subject matter, expertise level, style, and tone from document content.
 
+## Table of Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Running the App](#running-the-app)
+- [Usage](#usage)
+- [Advanced Features](#advanced-features)
+- [Project Structure](#project-structure)
+- [Dependencies](#dependencies)
+- [Environment Variables](#environment-variables)
+- [License](#license)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+
 ## Screenshots
 
 *(Add screenshots here if available)*
@@ -36,9 +53,10 @@
    ```bash
    git clone https://github.com/yukeshwarp/docQuest.git
    cd docQuest
-   ```
+
 
 2. **Install required packages:**
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -62,6 +80,7 @@
 
 4. **(Optional) Download NLTK stopwords:**
    The app downloads stopwords automatically on first run, but you may pre-download via:
+
    ```python
    python -c "import nltk; nltk.download('stopwords')"
    ```
@@ -73,11 +92,13 @@
 You can start the application using the provided shell script or manually:
 
 **Using the script:**
+
 ```bash
 ./streamlit.sh
 ```
 
 **Or manually:**
+
 ```bash
 pip install -r requirements.txt
 python -m streamlit run main.py --server.port 8000 --server.address 0.0.0.0
@@ -98,10 +119,10 @@ The app will be accessible at: [http://localhost:8000](http://localhost:8000)
 
 ## Advanced Features
 
-- **Batch Summarization:** Handles large documents or multiple files efficiently.
-- **Topic Extraction:** Uses NMF topic modeling to extract and summarize key topics.
-- **Configurable Token Limits:** Warns users when document size exceeds practical model limits.
-- **Extensible:** Modular design for adding new file types, LLM backends, or custom analytics.
+* **Batch Summarization:** Handles large documents or multiple files efficiently.
+* **Topic Extraction:** Uses NMF topic modeling to extract and summarize key topics.
+* **Configurable Token Limits:** Warns users when document size exceeds practical model limits.
+* **Extensible:** Modular design for adding new file types, LLM backends, or custom analytics.
 
 ---
 
@@ -124,16 +145,17 @@ streamlit.sh             # Startup script
 ## Dependencies
 
 See `requirements.txt` for the full list. Major libraries include:
-- `streamlit` (web app)
-- `azure-storage-blob`
-- `redis`
-- `nltk`
-- `scikit-learn`
-- `tiktoken`
-- `PyMuPDF`, `PyPDF2`, `python-docx`, `python-pptx`
-- `requests`
-- `Pillow`
-- `celery` (if using async tasks)
+
+* `streamlit` (web app)
+* `azure-storage-blob`
+* `redis`
+* `nltk`
+* `scikit-learn`
+* `tiktoken`
+* `PyMuPDF`, `PyPDF2`, `python-docx`, `python-pptx`
+* `requests`
+* `Pillow`
+* `celery` (if using async tasks)
 
 ---
 
@@ -157,9 +179,8 @@ Pull requests and feature requests are welcome! Please open issues for bugs or f
 
 ## Acknowledgements
 
-- Azure OpenAI
-- Streamlit
-- NLTK, scikit-learn
-- Bing Search API
-
-````
+* Azure OpenAI
+* Streamlit
+* NLTK, scikit-learn
+* Bing Search API
+```
