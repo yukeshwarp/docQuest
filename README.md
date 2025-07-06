@@ -14,9 +14,6 @@
 - [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
 - [Environment Variables](#environment-variables)
-- [License](#license)
-- [Contributing](#contributing)
-- [Acknowledgements](#acknowledgements)
 
 ## Features
 
