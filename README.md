@@ -233,18 +233,61 @@ celery_worker.py         # Celery background worker entrypoint
 
 ## Metadata & Information Extraction
 
-**Metadata** is the "brain" of this application.
-- For each document, the app extracts and stores:
-  - **Domain** (e.g., legal, medical, technical)
-  - **Subject matter**
-  - **Expertise level**
-  - **Style & tone**
-  - **File properties** (author, creation time, etc.)
-- **How metadata is used:**
-  - To tailor prompt engineering for the LLM
-  - To optimize search queries and Bing search topics
-  - To filter, rank, and present Q&A results contextually
-- **Pro-tip:** Refer to the extracted metadata to guide your questions for more accurate answers.
+**Metadata** is the "brain" of this application, serving as a foundational layer for intelligent document understanding, question answering, and contextual search. Here’s a detailed breakdown of how metadata is extracted, stored, and utilized throughout the system:
+
+### Extracted Metadata
+
+For every uploaded document, docQuest extracts and stores the following metadata:
+
+- **Domain**: The field or industry the document pertains to (e.g., legal, financial, medical, technical, academic).
+- **Subject Matter**: The main topic(s) or themes discussed in the document.
+- **Expertise Level**: Intended audience sophistication (e.g., beginner, intermediate, expert).
+- **Style & Tone**: Formality, tone (e.g., formal, informal, persuasive, explanatory).
+- **File Properties**: Author, creation/modification timestamps, file type, word count, page count, and other embedded properties.
+
+### How is Metadata Extracted?
+
+- **Automated Analysis**: On upload, the system uses NLP models and heuristics to auto-detect domain, subject, and expertise based on content sampling and keyword analysis.
+- **LLM Augmentation**: For richer context, the LLM may be prompted to summarize or classify the document’s characteristics.
+- **File Inspection**: Technical properties (author, page count, etc.) are pulled directly from the file headers or properties.
+
+### How is Metadata Used?
+
+Metadata is not just for display — it plays a crucial role in enabling powerful, accurate, and context-aware document analysis:
+
+#### 1. **Improved Question Answering**
+- When a user asks a question, the system leverages the document’s domain, subject, and expertise metadata to fine-tune LLM prompts.
+- For example, a legal document’s answers are framed with legal terminology, and medical documents are answered with appropriate caution and jargon.
+
+#### 2. **Adaptive Summarization**
+- Summaries are tailored based on the style and audience; a summary for an expert-level document will include more technical details, while one for a general audience will be simplified.
+
+#### 3. **Contextual Search & Ranking**
+- When searching within or across documents, metadata helps prioritize more relevant sections or documents based on the user’s query.
+- For example, if a user asks a technical question, the system can prioritize sections marked as “expert” or documents from a technical domain.
+
+#### 4. **Web Search Query Optimization**
+- The Bing search integration uses extracted topics and subject matter to craft more precise search queries, resulting in higher-quality web results tailored to the document context.
+
+#### 5. **Session State & Prompt Engineering**
+- Metadata is often embedded in session state for persistent, context-aware interactions.
+- Prompt templates dynamically adapt to include or reference metadata, making question answering more robust and contextually relevant.
+
+#### 6. **User Guidance & UI Display**
+- The UI displays metadata to help users understand what kind of information is available and to guide their questioning (e.g., showing “Domain: Finance” encourages finance-related questions).
+
+#### 7. **Filtering, Tagging, and Routing**
+- Metadata allows for powerful filtering (e.g., “show only technical documents”) and routing of questions to the right processing pipelines or LLM models.
+
+### Why is Metadata Important?
+
+- **Accuracy & Relevance**: By leveraging metadata, the system can provide more accurate and contextually appropriate answers.
+- **Performance**: Metadata enables smart shortcuts for search and retrieval, reducing unnecessary computation.
+- **Explainability**: Exposed metadata helps users understand why the system responds in certain ways, improving trust and usability.
+
+
+---
+
 
 ---
 
