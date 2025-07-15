@@ -2,6 +2,25 @@
 
 **docQuest** is an intelligent document analysis and question-answering application powered by LLMs (Large Language Models) and Azure OpenAI. It allows users to upload documents (PDF, Word, Excel, and more), ask questions, and receive answers enhanced with web search and metadata insights.
 
+## Workflow Diagram
+
+Below is a high-level workflow diagram describing the major steps and components of the docQuest application:
+
+<img width="2157" height="1663" alt="diagram-export-15-7-2025-12_58_21-pm" src="https://github.com/user-attachments/assets/dab4dfcf-5052-4605-a694-f29754964caa" />
+
+**Description of Workflow:**
+
+1. **Upload:** User uploads one or more documents via the app interface.
+2. **Conversion:** If a document is an Office file (Word, Excel, PowerPoint), it is converted to PDF using an Azure Function.
+3. **Parsing & Chunking:** Documents are parsed and split into manageable text chunks.
+4. **Storage:** Chunks are stored in Redis for fast retrieval; original files are uploaded to Azure Blob Storage.
+5. **Q&A:** When the user asks a question, relevant chunks are retrieved.
+6. **Web Augmentation:** The system augments context with Bing Web Search results if needed.
+7. **LLM Answering:** All relevant context is sent to the Azure OpenAI LLM to generate an answer.
+8. **Result Presentation:** The answer, with source references, is shown to the user.
+9. **Chat Export:** Users can save or export their chat history.
+
+
 ## Table of Contents
 
 - [Features](#features)
